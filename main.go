@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"notification-service/handler"
+	"notification-service/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,32 +22,11 @@ func main() {
 		})
 	})
 
-	r.POST("/notify", func(c *gin.Context) {
-		var req NotifyRequest
+	notificationService := service.NewNotificationService()
+	notificationHandler := handler.NewNotificationHandler(notificationService)
 
-		// request bind
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "invalid request",
-			})
-			return
-		}
-
-		// validation check
-		if req.UserID == "" || req.Message == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "user_id and message required",
-			})
-			return
-		}
-
-		println("Sending notification to:", req.UserID)
-		println("Message:", req.Message)
-
-		c.JSON(http.StatusOK, gin.H{
-			"status": "notification sent",
-		})
-	})
+	// routes
+	r.POST("/notify", notificationHandler.SendNotification)
 
 	r.Run(":8081")
 }
